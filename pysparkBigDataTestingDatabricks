@@ -1,0 +1,141 @@
+Data Testing Assessment
+Name: Varna Kottilingel
+Please note: Since there were issues with VM in laptop, Databricks community edition was used for the assessment.
+
+
+Pre-requisites:
+a. Download the hr_db dataset folder into your local.
+b. In Databricks community edition, create a cluster hr_db and confirm once it is up and running
+c. In Data tab. create Table and import employees.csv using drag and drop.
+d. Import rest of the datasets -all folders in hr_db using drag and drop
+
+
+Steps:
+#1. Upload hr_db dataset into HDFS
+
+import pyspark.sql.types as typ
+#Upload employees dataset
+empCols = [('employee_id', typ.IntegerType(), True), ('first_name', typ.StringType(), True),('last_name', typ.StringType(), True),('email', typ.StringType(), True),('phone_number', typ.StringType(), True),('hire_date', typ.StringType(), True),('job_id', typ.StringType(), True),('salary', typ.DoubleType(), True),('commission_pct', typ.StringType(), True),('manager_id', typ.IntegerType(), True),('department_id', typ.IntegerType(), True)]
+empSchema =  typ.StructType([typ.StructField(e[0], e[1], e[2]) for e in empCols ])
+# File location and type
+file_location = "/FileStore/tables/employees.csv"
+file_type = "csv"
+
+# CSV options
+first_row_is_header = "false"
+delimiter = "\t"
+
+# The applied options are for CSV files. For other file types, these will be ignored.
+df = spark.read.format(file_type).option("header", first_row_is_header).option("sep", delimiter).schema(empSchema).load(file_location)
+
+display(df)
+# Create a view or table
+temp_table_name = "EMPLOYEES"
+df.createOrReplaceTempView(temp_table_name)
+
+
+#Upload departments dataset
+deptCols = [('department_id', typ.IntegerType(), True), ('department_name', typ.StringType(), True),('manager_id', typ.IntegerType(), True),('location_id', typ.IntegerType(), True)]
+deptSchema =  typ.StructType([typ.StructField(e[0], e[1], e[2]) for e in deptCols ])
+# File location and type
+dept_file_location1 = "/FileStore/tables/hr_db/departments/"
+
+# CSV options
+delimiter = "	"
+
+# The applied options are for CSV files. For other file types, these will be ignored.
+dept_df = spark.read.format(file_type).option("header", first_row_is_header).option("sep", delimiter).schema(deptSchema).load(dept_file_location1)
+
+display(dept_df)
+temp_table_name = "DEPARTMENTS"
+dept_df.createOrReplaceTempView(temp_table_name)
+
+#Upload rest of the datasets
+import pyspark.sql.types as typ
+countriesCols = [('country_id', typ.StringType(), True), ('country_name', typ.StringType(), True),('region_id', typ.IntegerType(), True)]
+countriesSchema =  typ.StructType([typ.StructField(e[0], e[1], e[2]) for e in countriesCols ])
+# File location and type
+countries_file_location1 = "/FileStore/tables/hr_db/countries/"
+file_type = "csv"
+
+
+# CSV options
+#infer_schema = "false"
+first_row_is_header = "false"
+delimiter = "	"
+
+# The applied options are for CSV files. For other file types, these will be ignored.
+countries_df = spark.read.format(file_type).option("header", first_row_is_header).option("sep", delimiter).schema(countriesSchema).load(countries_file_location1)
+temp_table_name = "COUNTRIES"
+countries_df.createOrReplaceTempView(temp_table_name)
+
+regionsCols = [('region_id', typ.StringType(), True), ('region_name', typ.StringType(), True)]
+regionsSchema =  typ.StructType([typ.StructField(e[0], e[1], e[2]) for e in regionsCols ])
+# File location and type
+regions_file_location1 = "/FileStore/tables/hr_db/regions/"
+regions_df = spark.read.format(file_type).option("header", first_row_is_header).option("sep", delimiter).schema(regionsSchema).load(regions_file_location1)
+temp_table_name = "REGIONS"
+regions_df.createOrReplaceTempView(temp_table_name)
+
+locationsCols = [('location_id', typ.IntegerType(), True), ('street_address', typ.StringType(), True),('postal_code', typ.IntegerType(), True), ('city', typ.StringType(), True),('state_province', typ.StringType(), True), ('country_id', typ.StringType(), True)]
+locationsSchema =  typ.StructType([typ.StructField(e[0], e[1], e[2]) for e in locationsCols ])
+# File location and type
+locations_file_location1 = "/FileStore/tables/hr_db/locations/"
+locations_df = spark.read.format(file_type).option("header", first_row_is_header).option("sep", delimiter).schema(locationsSchema).load(locations_file_location1)
+temp_table_name = "LOCATIONS"
+locations_df.createOrReplaceTempView(temp_table_name)
+
+jobsCols = [('job_id', typ.StringType(), True), ('job_title', typ.StringType(), True),('min_salary', typ.DoubleType(), True), ('max_salary', typ.DoubleType(), True)]
+jobsSchema =  typ.StructType([typ.StructField(e[0], e[1], e[2]) for e in jobsCols ])
+# File location and type
+jobs_file_location1 = "/FileStore/tables/hr_db/jobs/"
+jobs_df = spark.read.format(file_type).option("header", first_row_is_header).option("sep", delimiter).schema(jobsSchema).load(jobs_file_location1)
+temp_table_name = "JOBS"
+jobs_df.createOrReplaceTempView(temp_table_name)
+
+job_historyCols = [('employee_id', typ.IntegerType(), True), ('start_date', typ.StringType(), True),('end_date', typ.StringType(), True), ('job_id', typ.StringType(), True),('department_id', typ.IntegerType(), True)]
+job_historySchema =  typ.StructType([typ.StructField(e[0], e[1], e[2]) for e in job_historyCols ])
+# File location and type
+job_history_file_location1 = "/FileStore/tables/hr_db/job_history/"
+job_history_df = spark.read.format(file_type).option("header", first_row_is_header).option("sep", delimiter).schema(job_historySchema).load(job_history_file_location1)
+temp_table_name = "JOB_HISTORY"
+job_history_df.createOrReplaceTempView(temp_table_name)
+
+
+
+#2. Solve the following use cases using Hive SQL or Spark RDD or Spark DF (Pick any one of these)
+#a. Retrieve last_name, first_name, salary, salary+300 as increment salary from employees table
+query=("select last_name,first_name,salary, salary+300 as incremental_salary from EMPLOYEES")
+spark.sql(query).show()
+
+ #b. Find out the ID's of departments in which employees are working
+query=("select distinct department_id from EMPLOYEES")
+spark.sql(query).show()
+
+ #c. Retrieve last_name, job_id, department_id of employee having last name as Whalen 
+query=("select LAST_NAME,job_id,department_id from EMPLOYEES where last_name='Whalen'")
+spark.sql(query).show()
+
+#d. Retrieve last name and salary of all employees who have salary greater than 5000 working in department 90
+query=("select LAST_NAME,salary from EMPLOYEES where salary>5000 and department_id=90")
+spark.sql(query).show()
+
+#e. Retrieve last_name, salary of all employees working as 'SA_REP','AD_PRES' earning above 5000, sort the data in ascending order of last name
+query=("select LAST_NAME,salary from EMPLOYEES where salary>5000 and job_id in ('SA_REP','AD_PRES') order by last_name")
+spark.sql(query).show()
+
+#f. Retrieve the last names of employees whose last but one character of the last name is e
+query=("select LAST_NAME from EMPLOYEES where last_name like '%e_'")
+spark.sql(query).show()
+
+#g. Retrieve the names of employees not having managers
+query=("select first_name ||' ' ||  last_name as EmployeeName from EMPLOYEES where manager_id is null")
+spark.sql(query).show()
+
+#h. Retrieve the employee name and the name of the department in which the employee is working
+query="select distinct first_name ||' ' ||  last_name as EmployeeName,department_name from EMPLOYEES emp join DEPARTMENTS dept on emp.department_id=dept.department_id "
+spark.sql(query).show()
+
+#i. List all the department ids having SIX employees
+query="select department_id, count(distinct first_name ||' ' ||  last_name)  as EmployeeCount from EMPLOYEES  group by department_id having EmployeeCount =6"
+spark.sql(query).show()
